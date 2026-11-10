@@ -1,0 +1,20 @@
+# dependencies and build output
+node_modules
+dist
+coverage
+
+# secrets and local configuration: never commit these (the Google Maps key lives in frontend/.env.local)
+.env
+.env.*
+!.env.example
+*.local
+*.pem
+*.key
+
+# editor, logs and OS files
+.idea
+.vscode/*
+!.vscode/extensions.json
+*.log
+.DS_Store
+Thumbs.db

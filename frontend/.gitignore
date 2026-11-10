@@ -1,0 +1,16 @@
+# dependencies and build output
+node_modules
+dist
+coverage
+
+# secrets and local configuration: never commit these (the Google Maps key lives in .env.local)
+.env
+.env.*
+!.env.example
+*.local
+*.pem
+*.key
+
+# logs and OS files
+*.log
+.DS_Store
