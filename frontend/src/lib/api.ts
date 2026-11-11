@@ -5,7 +5,7 @@ export class ApiError extends Error {
 }
 
 // Override with VITE_API_URL (e.g. /api/v1 behind a same-origin proxy).
-const BASE: string = import.meta.env.VITE_API_URL ?? 'http://localhost:4001/api/v1';
+const BASE: string = import.meta.env.VITE_API_URL ?? 'https://solarflow-backend.vercel.app/api/v1';
 let accessToken: string | null = null;
 let onSessionLost: (() => void) | null = null;
 let refreshing: Promise<string | null> | null = null;
