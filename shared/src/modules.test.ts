@@ -25,7 +25,7 @@ describe('modules', () => {
   });
 
   it('dependentsOf lists what switches off with a module', () => {
-    expect(dependentsOf('invoices')).toEqual(['payments']);
+    expect(dependentsOf('invoices')).toEqual(['payments', 'finance']);
     expect(dependentsOf('customers')).toEqual(expect.arrayContaining(['crm', 'quotations', 'invoices', 'payments', 'surveys']));
     expect(dependentsOf('reports')).toEqual([]);
   });

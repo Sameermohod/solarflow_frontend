@@ -1,6 +1,6 @@
 import {
   BarChart3, Boxes, Box, Building2, CalendarClock, Calculator, Cuboid, FileText, FolderKanban, Gauge, LayoutDashboard,
-  Package, PencilRuler, Receipt, Settings, ScrollText, Users, Wallet, Wrench, type LucideIcon,
+  Clock, Landmark, Package, PencilRuler, Receipt, Settings, ScrollText, Users, Wallet, Wrench, type LucideIcon,
 } from 'lucide-react';
 import type { PermissionKey } from '@solarflow/shared';
 
@@ -34,6 +34,8 @@ export const NAV: NavItem[] = [
   { key: 'payments', label: 'Payments', path: '/payments', icon: Wallet, perms: ['payment:view'], phase: 4, summary: 'Payments, partial payments, receipts and outstanding balances.', planned: ['Payment recording & allocation', 'Receipts', 'Outstanding tracking'] },
   { key: 'documents', label: 'Documents', path: '/documents', icon: FileText, perms: ['document:view'], phase: 5, summary: 'Template-driven documents, including configurable regulatory packs per jurisdiction.', planned: ['Branded templates with placeholders', 'Version & approval status', 'Regulatory pack configuration', 'Audit history'] },
   { key: 'maintenance', label: 'Maintenance', path: '/maintenance', icon: Wrench, perms: ['maintenance:view'], phase: 5, summary: 'Warranty, AMC, service tickets and preventive maintenance.', planned: ['Warranty tracking', 'AMC schedules', 'Service tickets', 'Replacement history'] },
+  { key: 'timesheets', label: 'Timesheets', path: '/timesheets', icon: Clock, perms: ['timesheet:view'], phase: 6, summary: 'Employee time logging with weekly approval and hours reports.', planned: [] },
+  { key: 'finance', label: 'Finance', path: '/finance', icon: Landmark, perms: ['payroll:view'], phase: 6, summary: 'Monthly salaries, project profitability and the finance summary.', planned: [] },
   { key: 'reports', label: 'Reports', path: '/reports', icon: BarChart3, perms: ['report:view'], phase: 6, summary: 'Cross-module business analytics and exports.', planned: ['Revenue & pipeline', 'Installation statistics', 'Export to CSV/PDF'] },
   { key: 'settings', label: 'Settings', path: '/settings', icon: Settings, perms: ['organization:view', 'user:view', 'role:view', 'auditLog:view'], phase: 1, summary: '', planned: [] },
 ];

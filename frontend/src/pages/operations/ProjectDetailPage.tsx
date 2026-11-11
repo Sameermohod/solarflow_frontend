@@ -11,18 +11,19 @@ import { Badge, Button, Card, CardBody, CardHeader, EmptyState, ErrorNote, Field
 import { useCatalogue, useMoney2 } from '@/features/commercial/api';
 import { AuthImage, countBadge, PRIORITY_TONE, PROJECT_TONE, TASK_TONE, UserSelect, dateInput, showDate, todayYmd, useNames } from './common';
 import { ProgressBar } from './ProjectsPage';
+import { ProjectTimeline } from './ProjectTimeline';
 
 interface Detail {
-  id: string; number: string; name: string; status: string; siteAddress: string | null; capacityKw: string | null; managerId: string | null; startDate: string | null; targetDate: string | null; completedAt: string | null; notes: string | null; progress: number; expenseTotal: number;
+  id: string; number: string; name: string; status: string; siteAddress: string | null; capacityKw: string | null; budget: string | null; managerId: string | null; startDate: string | null; targetDate: string | null; completedAt: string | null; notes: string | null; progress: number; expenseTotal: number;
   customer: { id: string; name: string; phone: string | null; email: string | null };
   milestones: { id: string; name: string; dueDate: string | null; weight: number; completedAt: string | null }[];
-  tasks: { id: string; title: string; description: string | null; status: string; priority: string; assigneeId: string | null; dueDate: string | null; milestoneId: string | null }[];
+  tasks: { id: string; title: string; description: string | null; status: string; priority: string; assigneeId: string | null; startDate: string | null; dueDate: string | null; createdAt: string; completedAt: string | null; milestoneId: string | null }[];
   materials: { id: string; equipmentId: string; quantityPlanned: string; quantityIssued: string; quantityReturned: string; equipment: { id: string; name: string; manufacturer: string; modelNumber: string; unit: string; trackSerial: boolean } }[];
   expenses: { id: string; description: string; category: string | null; amount: string; incurredOn: string }[];
   issues: { id: string; title: string; description: string | null; severity: string; status: string; resolution: string | null; createdAt: string }[];
   photos: { id: string; fileName: string; caption: string | null; sizeBytes: number; createdAt: string }[];
 }
-type TabId = 'overview' | 'tasks' | 'materials' | 'expenses' | 'issues' | 'photos';
+type TabId = 'overview' | 'timeline' | 'tasks' | 'materials' | 'expenses' | 'issues' | 'photos';
 
 export function ProjectDetailPage() {
   const { id = '' } = useParams();
@@ -51,7 +52,7 @@ export function ProjectDetailPage() {
         </>} />
       <ErrorNote error={run.error} />
       <div className="mb-4 flex flex-wrap items-center gap-4"><ProgressBar value={p.progress} /><span className="text-sm text-ink-muted">{open} open task{open === 1 ? '' : 's'}</span></div>
-      <div className="mb-4"><Tabs tabs={[{ id: 'overview', label: 'Overview' }, { id: 'tasks', label: 'Tasks', badge: countBadge(open) }, { id: 'materials', label: 'Materials' }, { id: 'expenses', label: 'Expenses' }, { id: 'issues', label: 'Issues', badge: countBadge(p.issues.filter((i) => i.status === 'OPEN').length) }, { id: 'photos', label: 'Photos' }]} value={tab} onChange={setTab} /></div>
+      <div className="mb-4"><Tabs tabs={[{ id: 'overview', label: 'Overview' }, { id: 'timeline', label: 'Timeline' }, { id: 'tasks', label: 'Tasks', badge: countBadge(open) }, { id: 'materials', label: 'Materials' }, { id: 'expenses', label: 'Expenses' }, { id: 'issues', label: 'Issues', badge: countBadge(p.issues.filter((i) => i.status === 'OPEN').length) }, { id: 'photos', label: 'Photos' }]} value={tab} onChange={setTab} /></div>
 
       {tab === 'overview' && (
         <div className="grid gap-4 lg:grid-cols-2">
@@ -60,7 +61,7 @@ export function ProjectDetailPage() {
             <CardBody className="space-y-1 text-sm">
               <p><span className="text-ink-muted">Customer: </span><Link className="text-brand hover:underline" to={`/customers/${p.customer.id}`}>{p.customer.name}</Link></p>
               <p><span className="text-ink-muted">Manager: </span>{name(p.managerId)}</p>
-              <p><span className="text-ink-muted">Capacity: </span>{p.capacityKw ? `${Number(p.capacityKw)} kW` : '—'}</p>
+              <p><span className="text-ink-muted">Capacity: </span>{p.capacityKw ? `${Number(p.capacityKw)} kW` : '—'} <span className="text-ink-muted">· Budget: </span>{p.budget ? money(p.budget) : '—'}</p>
               <p><span className="text-ink-muted">Start: </span>{showDate(p.startDate, locale)} <span className="text-ink-muted">· Target: </span>{showDate(p.targetDate, locale)}{p.completedAt ? <> <span className="text-ink-muted">· Completed: </span>{showDate(p.completedAt, locale)}</> : null}</p>
               {p.notes && <p className="whitespace-pre-wrap pt-2">{p.notes}</p>}
               <p className="pt-2"><Link className="text-brand hover:underline" to={`/documents?projectId=${p.id}`}>Documents for this project</Link></p>
@@ -69,6 +70,8 @@ export function ProjectDetailPage() {
           <Milestones p={p} edit={edit} onChange={refresh} />
         </div>
       )}
+
+      {tab === 'timeline' && <Card><CardHeader title="Timeline" description="Project span, milestones and task bars by start and due date" /><CardBody><ProjectTimeline p={p} /></CardBody></Card>}
 
       {tab === 'tasks' && (
         <Card>
@@ -248,8 +251,8 @@ function Photos({ p, edit, onChange }: { p: Detail; edit: boolean; onChange: () 
 }
 
 function TaskModal({ p, onClose, onDone }: { p: Detail; onClose: () => void; onDone: () => void }) {
-  const [f, setF] = useState({ title: '', description: '', milestoneId: '', priority: 'MEDIUM', assigneeId: '', dueDate: '' });
-  const m = useMutation({ mutationFn: () => api.post(`/projects/${p.id}/tasks`, { title: f.title, description: f.description || null, milestoneId: f.milestoneId || null, priority: f.priority, assigneeId: f.assigneeId || null, dueDate: f.dueDate || null }), onSuccess: () => { onDone(); onClose(); } });
+  const [f, setF] = useState({ title: '', description: '', milestoneId: '', priority: 'MEDIUM', assigneeId: '', startDate: '', dueDate: '' });
+  const m = useMutation({ mutationFn: () => api.post(`/projects/${p.id}/tasks`, { title: f.title, description: f.description || null, milestoneId: f.milestoneId || null, priority: f.priority, assigneeId: f.assigneeId || null, startDate: f.startDate || null, dueDate: f.dueDate || null }), onSuccess: () => { onDone(); onClose(); } });
   return (
     <Modal open title="Add task" onClose={onClose}>
       <div className="space-y-3">
@@ -258,6 +261,7 @@ function TaskModal({ p, onClose, onDone }: { p: Detail; onClose: () => void; onD
         <div className="grid grid-cols-2 gap-3">
           <Field label="Assignee"><UserSelect value={f.assigneeId} onChange={(v) => setF({ ...f, assigneeId: v })} /></Field>
           <Field label="Priority"><Select value={f.priority} onChange={(e) => setF({ ...f, priority: e.target.value })}>{PRIORITIES.map((s) => <option key={s} value={s}>{label(s)}</option>)}</Select></Field>
+          <Field label="Start date"><Input type="date" value={f.startDate} onChange={(e) => setF({ ...f, startDate: e.target.value })} /></Field>
           <Field label="Due date"><Input type="date" value={f.dueDate} onChange={(e) => setF({ ...f, dueDate: e.target.value })} /></Field>
           <Field label="Milestone"><Select value={f.milestoneId} onChange={(e) => setF({ ...f, milestoneId: e.target.value })}><option value="">None</option>{p.milestones.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</Select></Field>
         </div>
@@ -269,8 +273,8 @@ function TaskModal({ p, onClose, onDone }: { p: Detail; onClose: () => void; onD
 }
 
 function EditModal({ p, onClose, onDone }: { p: Detail; onClose: () => void; onDone: () => void }) {
-  const [f, setF] = useState({ name: p.name, siteAddress: p.siteAddress ?? '', capacityKw: p.capacityKw ? String(Number(p.capacityKw)) : '', managerId: p.managerId ?? '', startDate: dateInput(p.startDate), targetDate: dateInput(p.targetDate), notes: p.notes ?? '' });
-  const m = useMutation({ mutationFn: () => api.patch(`/projects/${p.id}`, { name: f.name, siteAddress: f.siteAddress || null, capacityKw: f.capacityKw ? Number(f.capacityKw) : null, managerId: f.managerId || null, startDate: f.startDate || null, targetDate: f.targetDate || null, notes: f.notes || null }), onSuccess: () => { onDone(); onClose(); } });
+  const [f, setF] = useState({ name: p.name, siteAddress: p.siteAddress ?? '', capacityKw: p.capacityKw ? String(Number(p.capacityKw)) : '', budget: p.budget ? String(Number(p.budget)) : '', managerId: p.managerId ?? '', startDate: dateInput(p.startDate), targetDate: dateInput(p.targetDate), notes: p.notes ?? '' });
+  const m = useMutation({ mutationFn: () => api.patch(`/projects/${p.id}`, { name: f.name, siteAddress: f.siteAddress || null, capacityKw: f.capacityKw ? Number(f.capacityKw) : null, budget: f.budget ? Number(f.budget) : null, managerId: f.managerId || null, startDate: f.startDate || null, targetDate: f.targetDate || null, notes: f.notes || null }), onSuccess: () => { onDone(); onClose(); } });
   return (
     <Modal open wide title="Edit project" onClose={onClose}>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -278,6 +282,7 @@ function EditModal({ p, onClose, onDone }: { p: Detail; onClose: () => void; onD
         <Field label="Manager"><UserSelect value={f.managerId} onChange={(v) => setF({ ...f, managerId: v })} label="None" /></Field>
         <Field label="Site address"><Input value={f.siteAddress} onChange={(e) => setF({ ...f, siteAddress: e.target.value })} /></Field>
         <Field label="Capacity (kW)"><Input inputMode="decimal" value={f.capacityKw} onChange={(e) => setF({ ...f, capacityKw: e.target.value })} /></Field>
+        <Field label="Budget (planned total cost)" hint="Compared with the actual cost in the Finance tracker"><Input inputMode="decimal" value={f.budget} onChange={(e) => setF({ ...f, budget: e.target.value })} /></Field>
         <Field label="Start date"><Input type="date" value={f.startDate} onChange={(e) => setF({ ...f, startDate: e.target.value })} /></Field>
         <Field label="Target completion"><Input type="date" value={f.targetDate} onChange={(e) => setF({ ...f, targetDate: e.target.value })} /></Field>
       </div>

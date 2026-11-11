@@ -32,6 +32,8 @@ export const projectSchema = z.object({
   quotationId: uuid.nullish().transform((v) => v ?? null),
   siteAddress: optText(400),
   capacityKw: z.number().finite().positive().max(1e6).nullish().transform((v) => v ?? null),
+  /** Planned total cost; the finance tracker compares it with the actual cost. */
+  budget: money.nullish().transform((v) => v ?? null),
   managerId: uuid.nullish().transform((v) => v ?? null),
   startDate: optDate,
   targetDate: optDate,
@@ -40,7 +42,7 @@ export const projectSchema = z.object({
   copyMaterials: z.boolean().default(true),
 }).refine((p) => !p.startDate || !p.targetDate || p.targetDate >= p.startDate, { message: 'Target date cannot be before the start date', path: ['targetDate'] });
 export const projectUpdateSchema = z.object({
-  name: z.string().trim().min(2).max(120), siteAddress: optText(400), capacityKw: z.number().finite().positive().max(1e6).nullish().transform((v) => v ?? null),
+  name: z.string().trim().min(2).max(120), siteAddress: optText(400), capacityKw: z.number().finite().positive().max(1e6).nullish().transform((v) => v ?? null), budget: money.nullish().transform((v) => v ?? null),
   managerId: uuid.nullish().transform((v) => v ?? null), startDate: optDate, targetDate: optDate, notes: optText(4000),
 }).partial();
 export const projectStatusSchema = z.object({ status: z.enum(PROJECT_STATUSES), note: optText(500) });
@@ -50,7 +52,7 @@ export const projectMilestoneUpdateSchema = projectMilestoneSchema.partial().ext
 
 export const taskSchema = z.object({
   title: z.string().trim().min(2).max(160), description: optText(4000), milestoneId: uuid.nullish().transform((v) => v ?? null),
-  priority: z.enum(PRIORITIES).default('MEDIUM'), assigneeId: uuid.nullish().transform((v) => v ?? null), dueDate: optDate,
+  priority: z.enum(PRIORITIES).default('MEDIUM'), assigneeId: uuid.nullish().transform((v) => v ?? null), startDate: optDate, dueDate: optDate,
 });
 export const taskUpdateSchema = taskSchema.partial().extend({ status: z.enum(TASK_STATUSES).optional() });
 

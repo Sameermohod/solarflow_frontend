@@ -8,3 +8,4 @@ export * from './commercial';
 export * from './proposal';
 export * from './modules';
 export * from './operations';
+export * from './finance';

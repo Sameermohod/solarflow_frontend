@@ -30,13 +30,19 @@ describe('LoginPage', () => {
 });
 
 describe('navigation & permissions', () => {
-  it('lists all 18 sidebar modules from the spec in order', () => {
-    expect(NAV.map((n) => n.label)).toEqual(['Dashboard', 'CRM', 'Customers', 'Site Surveys', 'Solar Calculator', '2D Designer', '3D Designer', 'Equipment', 'Inventory', 'BOM', 'Quotations', 'Projects', 'Invoices', 'Payments', 'Documents', 'Maintenance', 'Reports', 'Settings']);
+  it('lists the 18 modules from the spec in order, plus Timesheets and Finance before Reports', () => {
+    expect(NAV.map((n) => n.label)).toEqual(['Dashboard', 'CRM', 'Customers', 'Site Surveys', 'Solar Calculator', '2D Designer', '3D Designer', 'Equipment', 'Inventory', 'BOM', 'Quotations', 'Projects', 'Invoices', 'Payments', 'Documents', 'Maintenance', 'Timesheets', 'Finance', 'Reports', 'Settings']);
   });
   it('technicians do not see finance or settings; sales executives get the calculator but no settings', () => {
     useAuth.setState({ status: 'authenticated', session: session(defaultPermissionsFor('INSTALLATION_TECHNICIAN')) });
     expect(visibleFor()).not.toContain('invoices');
     expect(visibleFor()).not.toContain('settings');
+    expect(visibleFor()).not.toContain('finance'); // salaries are for payroll roles only
+    expect(visibleFor()).toContain('timesheets');
+    useAuth.setState({ session: session(defaultPermissionsFor('ACCOUNTANT')) });
+    expect(visibleFor()).toContain('finance');
+    useAuth.setState({ session: session(defaultPermissionsFor('PROJECT_MANAGER')) });
+    expect(visibleFor()).not.toContain('finance');
     useAuth.setState({ session: session(defaultPermissionsFor('SALES_EXECUTIVE')) });
     expect(visibleFor()).toContain('calculator');
     expect(visibleFor()).not.toContain('settings');

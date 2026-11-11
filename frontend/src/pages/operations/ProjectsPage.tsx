@@ -27,11 +27,11 @@ function NewProjectModal({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
   const can = useAuth((s) => s.can);
   const customers = useCustomerOptions();
-  const [f, setF] = useState({ name: '', customerId: '', quotationId: '', siteAddress: '', capacityKw: '', managerId: '', startDate: '', targetDate: '', notes: '' });
+  const [f, setF] = useState({ name: '', customerId: '', quotationId: '', siteAddress: '', capacityKw: '', budget: '', managerId: '', startDate: '', targetDate: '', notes: '' });
   const set = (k: keyof typeof f, v: string) => setF((x) => ({ ...x, [k]: v }));
   const quotes = useQuery({ queryKey: ['accepted-quotes', f.customerId], enabled: !!f.customerId && can('quotation:view'), queryFn: () => api.get<Page<{ id: string; number: string; revision: number; title: string; customerId?: string; customer: { id: string } }>>(`/quotations${qs({ status: 'ACCEPTED', pageSize: 100 })}`).then((r) => r.data.filter((q) => q.customer.id === f.customerId)) });
   const create = useMutation({
-    mutationFn: () => api.post<{ id: string }>('/projects', { name: f.name, customerId: f.customerId, quotationId: f.quotationId || null, siteAddress: f.siteAddress || null, capacityKw: f.capacityKw ? Number(f.capacityKw) : null, managerId: f.managerId || null, startDate: f.startDate || null, targetDate: f.targetDate || null, notes: f.notes || null }),
+    mutationFn: () => api.post<{ id: string }>('/projects', { name: f.name, customerId: f.customerId, quotationId: f.quotationId || null, siteAddress: f.siteAddress || null, capacityKw: f.capacityKw ? Number(f.capacityKw) : null, budget: f.budget ? Number(f.budget) : null, managerId: f.managerId || null, startDate: f.startDate || null, targetDate: f.targetDate || null, notes: f.notes || null }),
     onSuccess: (p) => { qc.invalidateQueries({ queryKey: ['projects'] }); nav(`/projects/${p.id}`); },
   });
   return (
@@ -41,6 +41,7 @@ function NewProjectModal({ onClose }: { onClose: () => void }) {
         <Field label="Customer"><Select value={f.customerId} onChange={(e) => { set('customerId', e.target.value); set('quotationId', ''); }}><option value="">Choose…</option>{customers.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select></Field>
         {can('quotation:view') && <Field label="From accepted quotation (optional)" hint="Copies its catalogue items as planned materials"><Select value={f.quotationId} onChange={(e) => set('quotationId', e.target.value)} disabled={!f.customerId}><option value="">None</option>{quotes.data?.map((q) => <option key={q.id} value={q.id}>{q.number}{q.revision > 1 ? ` R${q.revision}` : ''} · {q.title}</option>)}</Select></Field>}
         <Field label="Capacity (kW)"><Input inputMode="decimal" value={f.capacityKw} onChange={(e) => set('capacityKw', e.target.value)} /></Field>
+        <Field label="Budget (planned total cost)"><Input inputMode="decimal" value={f.budget} onChange={(e) => set('budget', e.target.value)} /></Field>
         <Field label="Project manager"><UserSelect value={f.managerId} onChange={(v) => set('managerId', v)} label="None" /></Field>
         <Field label="Site address"><Input value={f.siteAddress} onChange={(e) => set('siteAddress', e.target.value)} /></Field>
         <Field label="Start date"><Input type="date" value={f.startDate} onChange={(e) => set('startDate', e.target.value)} /></Field>

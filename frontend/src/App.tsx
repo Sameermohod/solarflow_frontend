@@ -19,6 +19,8 @@ import { MaintenancePage } from './pages/operations/MaintenancePage';
 import { DocumentsPage } from './pages/operations/DocumentsPage';
 import { DocumentDetailPage } from './pages/operations/DocumentDetailPage';
 import { ReportsPage } from './pages/operations/ReportsPage';
+import { TimesheetsPage } from './pages/operations/TimesheetsPage';
+import { FinancePage } from './pages/operations/FinancePage';
 import { UsersTab } from './pages/settings/UsersTab';
 import { RolesTab } from './pages/settings/RolesTab';
 import { AuditTab } from './pages/settings/AuditTab';
@@ -86,6 +88,8 @@ export function App() {
           <Route path="/maintenance" element={<Guard perm="maintenance:view"><MaintenancePage /></Guard>} />
           <Route path="/documents" element={<Guard perm="document:view"><DocumentsPage /></Guard>} />
           <Route path="/documents/:id" element={<Guard perm="document:view"><DocumentDetailPage /></Guard>} />
+          <Route path="/timesheets" element={<Guard perm="timesheet:view"><TimesheetsPage /></Guard>} />
+          <Route path="/finance" element={<Guard perm="payroll:view"><FinancePage /></Guard>} />
           <Route path="/reports" element={<Guard perm="report:view"><ReportsPage /></Guard>} />
           <Route path="/customers" element={<Guard perm="customer:view"><CustomersPage /></Guard>} />
           <Route path="/customers/:id" element={<Guard perm="customer:view"><CustomerDetailPage /></Guard>} />

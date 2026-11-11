@@ -5,6 +5,8 @@ export const RESOURCES = [
   'dashboard', 'customer', 'lead', 'survey', 'calculator', 'design', 'equipment',
   'inventory', 'bom', 'quotation', 'contract', 'invoice', 'payment', 'document',
   'project', 'task', 'maintenance', 'report', 'organization', 'user', 'role', 'auditLog',
+  // timesheet: employee time logging. payroll: monthly salaries and the finance tracker built on them.
+  'timesheet', 'payroll',
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
@@ -78,6 +80,18 @@ const GRANTS: Record<RoleKey, Grant> = {
     quotation: V, invoice: V, payment: V, document: V, project: V, maintenance: ['view', 'create'],
   },
 };
+
+/** Time logging and salary rights. Salaries are visible only to roles with payroll access (owner, admin, accountant). */
+const EXTRA_GRANTS: Partial<Record<RoleKey, Grant>> = {
+  SALES_MANAGER: { timesheet: V },
+  SALES_EXECUTIVE: { timesheet: RW },
+  SOLAR_DESIGNER: { timesheet: RW },
+  SURVEY_ENGINEER: { timesheet: RW },
+  INSTALLATION_TECHNICIAN: { timesheet: RW },
+  PROJECT_MANAGER: { timesheet: [...RW, 'approve', 'export'] },
+  ACCOUNTANT: { timesheet: ['view', 'export'], payroll: ['view', 'edit', 'export'] },
+};
+for (const [role, g] of Object.entries(EXTRA_GRANTS)) Object.assign(GRANTS[role as RoleKey], g);
 
 export function defaultPermissionsFor(role: RoleKey): PermissionKey[] {
   const grant = GRANTS[role];

@@ -25,6 +25,8 @@ export const MODULES = [
   { key: 'projects', label: 'Projects & Tasks', description: 'Installation projects and tasks', resources: ['project', 'task'], requires: ['customers'] },
   { key: 'documents', label: 'Documents', description: 'Document templates and packs', resources: ['document'], requires: [] },
   { key: 'maintenance', label: 'Maintenance', description: 'Warranty, AMC and service tickets', resources: ['maintenance'], requires: ['customers'] },
+  { key: 'timesheets', label: 'Timesheets', description: 'Employee time logging with weekly approval and hours reports', resources: ['timesheet'], requires: ['projects'] },
+  { key: 'finance', label: 'Finance tracker', description: 'Monthly salary costing, project profitability and the finance summary', resources: ['payroll'], requires: ['projects', 'invoices'] },
   { key: 'reports', label: 'Reports', description: 'Business analytics and exports', resources: ['report'], requires: [] },
 ] as const satisfies readonly ModuleDef[];
 
