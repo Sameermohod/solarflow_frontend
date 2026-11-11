@@ -36,7 +36,7 @@ npm run build       # production build in frontend/dist
 
 ## Deploying
 
-`npm run build` produces static files in `frontend/dist`. Host them on any static host (Netlify, Vercel, Cloudflare Pages, S3 + CDN, nginx) with a **single-page-app fallback** (every unknown path serves `index.html`). Build with `VITE_API_URL` set to the deployed API, and add the web app's URL to the backend's `CORS_ORIGINS`. GitHub Actions (`.github/workflows/ci.yml`) type-checks, tests and builds on every push.
+`npm run build` produces static files in `frontend/dist`. On Vercel the settings are in `vercel.json` (Root Directory = repository root, Framework Preset = Other; add the two variables below under Environment Variables). Host them on any static host (Netlify, Vercel, Cloudflare Pages, S3 + CDN, nginx) with a **single-page-app fallback** (every unknown path serves `index.html`). Build with `VITE_API_URL` set to the deployed API, and add the web app's URL to the backend's `CORS_ORIGINS`. GitHub Actions (`.github/workflows/ci.yml`) type-checks, tests and builds on every push.
 
 ## Security
 
