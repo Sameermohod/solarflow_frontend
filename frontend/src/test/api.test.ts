@@ -54,3 +54,37 @@ describe('api client', () => {
     await expect(api.post('/users', {})).rejects.toMatchObject({ status: 409, message: 'Email taken' });
   });
 });
+
+describe('session persistence across a refresh', () => {
+  afterEach(() => { vi.restoreAllMocks(); sessionStorage.clear(); });
+
+  it('stores the token in sessionStorage and removes it on sign-out', () => {
+    tokenStore.set('abc');
+    expect(sessionStorage.getItem('solarflow.token')).toBe('abc');
+    tokenStore.set(null);
+    expect(sessionStorage.getItem('solarflow.token')).toBeNull();
+  });
+
+  it('restores the session from the stored token without using the cookie', async () => {
+    tokenStore.set('keep');
+    const f = vi.spyOn(globalThis, 'fetch').mockResolvedValue(json(200, { user: { id: 'u' }, organization: {}, roles: [], permissions: ['x'] }));
+    const got: unknown[] = [];
+    window.addEventListener('sf:session', (e) => got.push((e as CustomEvent).detail), { once: true });
+    const { restoreSession } = await import('@/lib/api');
+    expect(await restoreSession()).toBe(true);
+    expect(String(f.mock.calls[0]![0])).toContain('/auth/me');
+    expect(((f.mock.calls[0]![1] as RequestInit).headers as Record<string, string>).Authorization).toBe('Bearer keep');
+    expect(f).toHaveBeenCalledTimes(1);
+    expect(got[0]).toMatchObject({ accessToken: 'keep', permissions: ['x'] });
+  });
+
+  it('falls back to the refresh cookie when the stored token is rejected, and signs out if that fails too', async () => {
+    tokenStore.set('stale');
+    const f = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(json(401, { error: { message: 'expired' } })).mockResolvedValueOnce(json(401, { error: { message: 'No session' } }));
+    const { restoreSession } = await import('@/lib/api');
+    expect(await restoreSession()).toBe(false);
+    expect(f).toHaveBeenCalledTimes(2);
+    expect(String(f.mock.calls[1]![0])).toContain('/auth/refresh');
+    expect(sessionStorage.getItem('solarflow.token')).toBeNull();
+  });
+});

@@ -6,12 +6,18 @@ export class ApiError extends Error {
 
 // Override with VITE_API_URL (default in production: /api/v1, proxied to the backend by vercel.json so the login cookie stays first-party).
 const BASE: string = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? '/api/v1' : 'http://localhost:4001/api/v1');
-let accessToken: string | null = null;
+const TOKEN_KEY = 'solarflow.token';
+// The access token lives in sessionStorage so a page refresh keeps you signed in; it is removed on sign-out and when the tab closes.
+const stored = {
+  read: (): string | null => { try { return sessionStorage.getItem(TOKEN_KEY); } catch { return null; } },
+  write: (t: string | null) => { try { if (t) sessionStorage.setItem(TOKEN_KEY, t); else sessionStorage.removeItem(TOKEN_KEY); } catch { /* storage blocked: the session just will not survive a refresh */ } },
+};
+let accessToken: string | null = stored.read();
 let onSessionLost: (() => void) | null = null;
 let refreshing: Promise<string | null> | null = null;
 
 export const tokenStore = {
-  set: (t: string | null) => { accessToken = t; },
+  set: (t: string | null) => { accessToken = t; stored.write(t); },
   get: () => accessToken,
   onSessionLost: (fn: () => void) => { onSessionLost = fn; },
 };
@@ -27,6 +33,18 @@ async function parse(res: Response) {
   return body;
 }
 
+/** On page load: the stored token restores the session; if it is missing or expired, the refresh cookie is tried. */
+export async function restoreSession(): Promise<boolean> {
+  if (accessToken) {
+    try {
+      const res = await fetch(`${BASE}/auth/me`, { headers: { Authorization: `Bearer ${accessToken}`, 'X-Requested-With': 'solarflow' }, credentials: 'include' });
+      if (res.ok) { window.dispatchEvent(new CustomEvent('sf:session', { detail: { ...(await res.json()), accessToken } })); return true; }
+    } catch { /* offline or server error: fall through to the cookie */ }
+    accessToken = null; stored.write(null);
+  }
+  return !!(await refreshSession());
+}
+
 /** Single-flight refresh: concurrent 401s share one rotation (a second call would trip reuse detection). */
 export function refreshSession(): Promise<string | null> {
   refreshing ??= fetch(`${BASE}/auth/refresh`, { method: 'POST', credentials: 'include', headers: { 'X-Requested-With': 'solarflow' } })
@@ -34,6 +52,7 @@ export function refreshSession(): Promise<string | null> {
       if (!r.ok) return null;
       const body = await r.json();
       accessToken = body.accessToken;
+      stored.write(accessToken);
       window.dispatchEvent(new CustomEvent('sf:session', { detail: body }));
       return accessToken;
     })

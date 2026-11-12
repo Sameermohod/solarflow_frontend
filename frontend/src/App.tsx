@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { refreshSession, tokenStore } from './lib/api';
+import { restoreSession, tokenStore } from './lib/api';
 import { NAV, isLive } from './lib/nav';
 import { useAuth, type SessionPayload } from './store/auth';
 import { FullPageSpinner } from './components/ui';
@@ -66,7 +66,7 @@ export function App() {
     const onSession = (e: Event) => setSession((e as CustomEvent<SessionPayload>).detail);
     window.addEventListener('sf:session', onSession);
     tokenStore.onSessionLost(() => { qc.clear(); clear(); });
-    refreshSession().then((t) => { if (!t) clear(); });
+    restoreSession().then((ok) => { if (!ok) clear(); });
     return () => window.removeEventListener('sf:session', onSession);
   }, [setSession, clear, qc]);
 
