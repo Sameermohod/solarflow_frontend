@@ -4,5 +4,8 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
   "outputDirectory": "frontend/dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://solarflow-backend.vercel.app/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
